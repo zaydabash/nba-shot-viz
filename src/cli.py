@@ -38,14 +38,18 @@ def main():
             out_png = plot_hexbin(csv_path, player, args.season, args.season_type,
                                   metric=args.metric, gridsize=args.gridsize)
             
-            # Print summary with shot count
-            print(f"[bold green]✓ {player}: {shot_count} shots → {out_png}[/bold green]")
-            
             # Generate interactive HTML if requested
+            out_html = None
             if args.interactive:
                 out_html = plot_plotly(csv_path, player, args.season, args.season_type,
                                       metric=args.metric, bin_size=15)
-                print(f"[bold cyan]Interactive HTML chart saved → {out_html}[/bold cyan]")
+            
+            # Print per-player summary
+            summary_parts = [f"[bold green]✓ {player}: {shot_count} shots", f"PNG: {out_png}"]
+            if out_html:
+                summary_parts.append(f"HTML: {out_html}")
+            
+            print(" | ".join(summary_parts))
         except Exception as e:
             print(f"[bold red]✗ Error processing {player}: {str(e)}[/bold red]")
         
