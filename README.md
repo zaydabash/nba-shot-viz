@@ -8,6 +8,16 @@
 
 This repo pulls **real** shot locations from the NBA.com Stats API (via `nba_api`) and renders a clean, professional half-court **hexbin** shot chart for either **frequency** or **efficiency (FG%)**.
 
+### Demo Mode (no live data)
+The app opens in **Demo mode**, which shows a bundled example chart when cache/network is unavailable.  
+To fetch live NBA data locally:
+1) Put headers in `.streamlit/secrets.toml` (see "Streamlit App" section).
+2) Uncheck "Demo mode" in the sidebar.
+3) Optionally pre-warm cache with:
+   `python tools/refresh_cache.py --season "2023-24" --season_type "Regular Season" --force`
+
+This prevents reviewers from seeing API throttling errors on shared/cloud networks while still demonstrating the full UI and visuals.
+
 **Highlights**
 - Real-time fetch from `ShotChartDetail` with `context_measure_simple="FGA"` (includes makes & misses).
 - NBA coordinate-accurate half court overlay.
