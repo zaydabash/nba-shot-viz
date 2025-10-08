@@ -1,0 +1,8 @@
+nba_api==1.10.2
+pandas==2.2.3
+numpy==2.1.1
+matplotlib==3.9.0
+plotly==5.24.1
+tenacity==9.0.0
+python-slugify==8.0.4
+rich==13.9.2
