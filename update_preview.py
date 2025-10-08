@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Helper script to update the preview screenshot in README.md.
-Automatically copies the most recent PNG from outputs/figures/ to screenshot.png
-and commits the change.
+Automatically copies the most recent PNG from outputs/figures/ to screenshot.png,
+commits the change, and pushes to GitHub.
 """
 
 import os
@@ -27,24 +27,30 @@ def copy_to_screenshot(source_path):
     shutil.copy2(source_path, dest_path)
     return dest_path
 
-def git_commit(file_path):
-    """Commit the screenshot change"""
+def git_commit_and_push(file_path):
+    """Commit the screenshot change and push to GitHub"""
     try:
         # Add the file
         subprocess.run(["git", "add", file_path], check=True)
         
-        # Commit with a descriptive message
-        commit_msg = f"Update preview screenshot from {os.path.basename(file_path)}"
-        subprocess.run(["git", "commit", "-m", commit_msg], check=True)
+        # Commit with the specified message
+        commit_msg = "Update preview image"
+        result = subprocess.run(["git", "commit", "-m", commit_msg], 
+                              check=True, capture_output=True, text=True)
         
-        print(f"✅ Committed: {commit_msg}")
-        return True
+        # Extract commit hash from the output
+        commit_hash = result.stdout.strip().split()[-1]
+        
+        # Push to GitHub
+        subprocess.run(["git", "push"], check=True)
+        
+        return commit_hash
     except subprocess.CalledProcessError as e:
-        print(f"❌ Git commit failed: {e}")
-        return False
+        print(f"❌ Git operation failed: {e}")
+        return None
     except FileNotFoundError:
-        print("❌ Git not found. Please commit manually.")
-        return False
+        print("❌ Git not found. Please commit and push manually.")
+        return None
 
 def main():
     """Main function to update preview screenshot"""
@@ -62,11 +68,14 @@ def main():
         dest_path = copy_to_screenshot(source_png)
         print(f"📋 Copied to: {dest_path}")
         
-        # Commit the change
-        if git_commit(dest_path):
-            print("🎉 Preview screenshot updated and committed!")
+        # Commit and push
+        commit_hash = git_commit_and_push(dest_path)
+        if commit_hash:
+            print(f"✅ Committed: {dest_path}")
+            print(f"🔗 Commit hash: {commit_hash}")
+            print("🚀 Pushed to GitHub successfully!")
         else:
-            print("⚠️  Screenshot updated but commit failed. Please commit manually.")
+            print("⚠️  Screenshot updated but commit/push failed. Please handle manually.")
             
     except FileNotFoundError as e:
         print(f"❌ Error: {e}")

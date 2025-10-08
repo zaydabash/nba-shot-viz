@@ -1,5 +1,6 @@
 from __future__ import annotations
 import argparse, os
+import pandas as pd
 from rich import print
 from .fetch_shots import fetch_and_cache
 from .plot_shot_chart import plot_hexbin
@@ -27,9 +28,16 @@ def main():
         
         try:
             csv_path = fetch_and_cache(player, args.season, args.season_type)
+            
+            # Get shot count for summary
+            df = pd.read_csv(csv_path)
+            shot_count = len(df)
+            
             out_png = plot_hexbin(csv_path, player, args.season, args.season_type,
                                   metric=args.metric, gridsize=args.gridsize)
-            print(f"[bold green]✓ Chart saved → {out_png}[/bold green]")
+            
+            # Print summary with shot count
+            print(f"[bold green]✓ {player}: {shot_count} shots → {out_png}[/bold green]")
         except Exception as e:
             print(f"[bold red]✗ Error processing {player}: {str(e)}[/bold red]")
         
