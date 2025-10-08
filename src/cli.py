@@ -3,7 +3,7 @@ import argparse, os
 import pandas as pd
 from rich import print
 from .fetch_shots import fetch_and_cache
-from .plot_shot_chart import plot_hexbin
+from .plot_shot_chart import plot_hexbin, plot_plotly
 
 def main():
     p = argparse.ArgumentParser(description="NBA Shot Chart Visualizer")
@@ -12,6 +12,7 @@ def main():
     p.add_argument("--season_type", default="Regular Season", choices=["Regular Season","Playoffs","Pre Season","All Star"])
     p.add_argument("--metric", default="fg_pct", choices=["fg_pct","frequency"])
     p.add_argument("--gridsize", type=int, default=30)
+    p.add_argument("--interactive", action='store_true', help='Generate interactive HTML chart')
     args = p.parse_args()
 
     # Parse comma-separated player names
@@ -19,6 +20,7 @@ def main():
     
     os.makedirs("data/raw", exist_ok=True)
     os.makedirs("outputs/figures", exist_ok=True)
+    os.makedirs("outputs/html", exist_ok=True)
     
     print(f"[bold blue]Processing {len(player_names)} player(s): {', '.join(player_names)}[/bold blue]")
     print()
@@ -38,6 +40,12 @@ def main():
             
             # Print summary with shot count
             print(f"[bold green]✓ {player}: {shot_count} shots → {out_png}[/bold green]")
+            
+            # Generate interactive HTML if requested
+            if args.interactive:
+                out_html = plot_plotly(csv_path, player, args.season, args.season_type,
+                                      metric=args.metric, bin_size=15)
+                print(f"[bold cyan]Interactive HTML chart saved → {out_html}[/bold cyan]")
         except Exception as e:
             print(f"[bold red]✗ Error processing {player}: {str(e)}[/bold red]")
         

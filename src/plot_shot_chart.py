@@ -53,100 +53,129 @@ def plot_hexbin(csv_path: str, player: str, season: str, season_type: str,
         plt.savefig(out, bbox_inches="tight", facecolor="white")
     return out
 
-def plot_plotly(csv_path: str, player: str, season: str, season_type: str) -> str:
+def plot_plotly(csv_path: str, player: str, season: str, season_type: str, metric: str = "fg_pct", bin_size: int = 15) -> str:
     """
-    Create an interactive Plotly scatter plot version of the shot chart.
-    Saves to outputs/html/{player}_{season}.html
+    Create an interactive Plotly binned shot chart.
     """
     df = _load(csv_path)
     
-    # Create scatter plot with different colors for made/missed shots
+    # Bin court coordinates into grid
+    df['bin_x'] = ((df['LOC_X'] + 250) // bin_size).astype(int)
+    df['bin_y'] = (df['LOC_Y'] // bin_size).astype(int)
+    
+    # Calculate bin centers
+    df['bin_center_x'] = df['bin_x'] * bin_size - 250 + bin_size / 2
+    df['bin_center_y'] = df['bin_y'] * bin_size + bin_size / 2
+    
+    # Group by bins and calculate metrics
+    bin_stats = df.groupby(['bin_x', 'bin_y', 'bin_center_x', 'bin_center_y']).agg({
+        'SHOT_MADE_FLAG': ['count', 'mean']
+    }).reset_index()
+    
+    bin_stats.columns = ['bin_x', 'bin_y', 'bin_center_x', 'bin_center_y', 'attempts', 'fg_pct']
+    
+    # Filter based on metric
+    if metric == "fg_pct":
+        bin_stats = bin_stats[bin_stats['attempts'] >= 3]  # Hide bins with < 3 attempts
+        color_col = 'fg_pct'
+        color_title = 'FG%'
+        colorscale = 'Viridis'
+    else:  # frequency
+        bin_stats = bin_stats[bin_stats['attempts'] >= 1]  # Show all bins with attempts
+        color_col = 'attempts'
+        color_title = 'Attempts'
+        colorscale = 'Inferno'
+    
+    # Create scattergl plot
     fig = go.Figure()
     
-    # Made shots
-    made_shots = df[df["SHOT_MADE_FLAG"] == 1]
-    fig.add_trace(go.Scatter(
-        x=made_shots["LOC_X"],
-        y=made_shots["LOC_Y"],
+    # Prepare customdata with NaN handling
+    customdata = []
+    for attempts, fg_pct in zip(bin_stats['attempts'], bin_stats['fg_pct']):
+        fg_pct_val = fg_pct if not pd.isna(fg_pct) else None
+        customdata.append([attempts, fg_pct_val])
+    
+    fig.add_trace(go.Scattergl(
+        x=bin_stats['bin_center_x'],
+        y=bin_stats['bin_center_y'],
         mode='markers',
         marker=dict(
-            size=8,
-            color='green',
-            opacity=0.7,
-            line=dict(width=1, color='darkgreen')
+            size=bin_stats['attempts'] * 2,  # Size proportional to attempts
+            color=bin_stats[color_col],
+            colorscale=colorscale,
+            opacity=0.95,
+            line=dict(width=0),
+            showscale=True,
+            colorbar=dict(title=color_title)
         ),
-        name='Made',
-        hovertemplate='<b>Made Shot</b><br>' +
-                      'Location: (%{x:.0f}, %{y:.0f})<br>' +
-                      '<extra></extra>'
+        hovertemplate=(
+            "x: %{x:.0f}, y: %{y:.0f}<br>" +
+            "Attempts: %{customdata[0]}<br>" +
+            "FG%: %{customdata[1]:.2f}<extra></extra>"
+        ),
+        customdata=customdata
     ))
     
-    # Missed shots
-    missed_shots = df[df["SHOT_MADE_FLAG"] == 0]
-    fig.add_trace(go.Scatter(
-        x=missed_shots["LOC_X"],
-        y=missed_shots["LOC_Y"],
-        mode='markers',
-        marker=dict(
-            size=8,
-            color='red',
-            opacity=0.7,
-            line=dict(width=1, color='darkred')
-        ),
-        name='Missed',
-        hovertemplate='<b>Missed Shot</b><br>' +
-                      'Location: (%{x:.0f}, %{y:.0f})<br>' +
-                      '<extra></extra>'
-    ))
-    
-    # Add court outline (simplified)
+    # Add NBA court shapes (clean white lines for dark theme)
     court_shapes = [
-        # Hoop
-        dict(type="circle", x0=-7.5, y0=52.5, x1=7.5, y1=67.5, line=dict(color="black", width=2)),
+        # Outer lines (half-court)
+        dict(type="rect", x0=-250, y0=0, x1=250, y1=470, line=dict(color="#e6e6e6", width=1.2), fillcolor="rgba(0,0,0,0)"),
+        
+        # Lane/paint
+        dict(type="rect", x0=-80, y0=0, x1=80, y1=190, line=dict(color="#e6e6e6", width=1.2), fillcolor="rgba(0,0,0,0)"),
+        
+        # Free-throw circle
+        dict(type="circle", x0=-60, y0=130, x1=60, y1=250, line=dict(color="#e6e6e6", width=1.2), fillcolor="rgba(0,0,0,0)"),
+        
+        # Restricted area arc
+        dict(type="path", path="M -40,60 A 40,40 0 0,1 40,60", line=dict(color="#e6e6e6", width=1.2), fillcolor="rgba(0,0,0,0)"),
+        
         # Backboard
-        dict(type="rect", x0=-30, y0=40, x1=30, y1=41, line=dict(color="black", width=2)),
-        # Paint
-        dict(type="rect", x0=-80, y0=0, x1=80, y1=190, line=dict(color="black", width=2)),
-        # Free throw line
-        dict(type="rect", x0=-60, y0=0, x1=60, y1=190, line=dict(color="black", width=2)),
-        # Three-point line (simplified arc)
-        dict(type="path", path="M -220,0 L -220,140 A 237.5,237.5 0 0,1 220,140 L 220,0", line=dict(color="black", width=2)),
-        # Court boundaries
-        dict(type="rect", x0=-250, y0=0, x1=250, y1=470, line=dict(color="black", width=2), fillcolor="rgba(0,0,0,0)")
+        dict(type="rect", x0=-30, y0=40, x1=30, y1=41, line=dict(color="#e6e6e6", width=1.2), fillcolor="#e6e6e6"),
+        
+        # Rim (small circle)
+        dict(type="circle", x0=-7.5, y0=52.5, x1=7.5, y1=67.5, line=dict(color="#e6e6e6", width=1.2), fillcolor="rgba(0,0,0,0)"),
+        
+        # 3PT corners + arc
+        dict(type="path", path="M -220,0 L -220,140 A 237.5,237.5 0 0,1 220,140 L 220,0", line=dict(color="#e6e6e6", width=1.2), fillcolor="rgba(0,0,0,0)"),
     ]
     
     fig.update_layout(
-        title=f"{player} — {season} ({season_type})<br><sub>Interactive Shot Chart (NBA.com Stats via nba_api)</sub>",
+        template=None,
+        paper_bgcolor="#0f1115",
+        plot_bgcolor="#0f1115",
+        font=dict(family="Inter, Helvetica, Arial, sans-serif", size=13, color="#e6e6e6"),
+        margin=dict(l=20, r=20, t=70, b=20),
+        width=980, height=720,
+        title=dict(
+            text=f"{player} — {season} ({season_type})",
+            x=0.5, xanchor="center",
+            font=dict(size=20, color="#ffffff")
+        ),
+        showlegend=False,
         xaxis=dict(
             range=[-250, 250],
             scaleanchor="y",
             scaleratio=1,
             showgrid=False,
             zeroline=False,
-            showticklabels=False
+            showticklabels=False,
+            color="#e6e6e6"
         ),
         yaxis=dict(
             range=[470, 0],  # Inverted for TV-style view
             showgrid=False,
             zeroline=False,
-            showticklabels=False
+            showticklabels=False,
+            color="#e6e6e6"
         ),
-        shapes=court_shapes,
-        plot_bgcolor='white',
-        width=800,
-        height=600,
-        showlegend=True,
-        legend=dict(
-            yanchor="top",
-            y=0.99,
-            xanchor="left",
-            x=0.01
-        )
+        shapes=court_shapes
     )
     
-    # Save to HTML
-    out_path = f"outputs/html/{slugify(player)}_{season.replace(' ','_')}.html"
+    # Save HTML with responsive configuration
+    out_path = f"outputs/html/{slugify(player)}_{season.replace(' ','_')}_{slugify(season_type)}_{metric}.html"
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    fig.write_html(out_path)
+    fig.write_html(out_path, include_plotlyjs="cdn", full_html=True, config={"responsive": True})
     
+    print(f"Interactive HTML chart saved → {out_path}")
     return out_path

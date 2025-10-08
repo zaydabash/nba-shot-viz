@@ -27,27 +27,10 @@ python -m pip install --upgrade pip
 python src/cli.py --player "Stephen Curry" --season "2023-24" --season_type "Regular Season" --metric fg_pct
 ```
 
-## Interactive Version
+### Interactive (Plotly)
 
-For interactive shot charts with hover details and zoom capabilities, use the `plot_plotly()` function:
+Generate an interactive HTML chart you can open in a browser (zoom, pan, hover):
 
-```python
-from src.plot_shot_chart import plot_plotly
-from src.fetch_shots import fetch_and_cache
-
-# Fetch data
-csv_path = fetch_and_cache("Stephen Curry", "2023-24", "Regular Season")
-
-# Create interactive HTML chart
-html_path = plot_plotly(csv_path, "Stephen Curry", "2023-24", "Regular Season")
-print(f"Interactive chart saved → {html_path}")
+```bash
+python -m src.cli --player "Stephen Curry" --season "2023-24" --season_type "Regular Season" --metric fg_pct --interactive
 ```
-
-**Features:**
-- **Hover details**: See exact shot coordinates and make/miss status
-- **Zoom & pan**: Explore specific court areas in detail
-- **Toggle layers**: Show/hide made vs missed shots
-- **Responsive**: Works on desktop and mobile browsers
-- **Self-contained**: HTML files include all dependencies
-
-Interactive charts are saved to `outputs/html/` and can be opened in any web browser.
