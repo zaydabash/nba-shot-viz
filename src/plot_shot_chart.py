@@ -24,33 +24,63 @@ def plot_hexbin(csv_path: str, player: str, season: str, season_type: str,
     y = df["LOC_Y"].to_numpy()
     made = df["SHOT_MADE_FLAG"].to_numpy()
 
-    plt.figure(figsize=(6.5, 6.2), dpi=140)
-    ax = plt.gca()
-    draw_half_court(ax, line_color="#444", lw=1.4)
+    # Set dark theme
+    plt.style.use('dark_background')
+    fig, ax = plt.subplots(figsize=(6.5, 6.2), dpi=200, facecolor='#0f1115')
+    ax.set_facecolor('#0f1115')
+    
+    # Draw court with white lines and anti-aliasing
+    draw_half_court(ax, line_color="white", lw=1.2)
 
     if metric == "fg_pct":
         C = made
         reduce = np.mean
-        hb = plt.hexbin(x, y, C=C, reduce_C_function=reduce, gridsize=gridsize,
-                        extent=(-250,250,0,470), mincnt=3, linewidths=0)
-        cb_label = "FG% (per hex, min 3 att.)"
+        hb = ax.hexbin(x, y, C=C, reduce_C_function=reduce, gridsize=gridsize,
+                       extent=(-250,250,0,470), mincnt=3, linewidths=0,
+                       cmap='viridis')
+        cb_label = "FG%"
+        
+        # Apply percentile clipping (2nd-98th percentile)
+        if len(C) > 0:
+            vmin, vmax = np.percentile(C, [2, 98])
+            hb.set_clim(vmin, vmax)
     else:
-        hb = plt.hexbin(x, y, gridsize=gridsize, extent=(-250,250,0,470),
-                        mincnt=1, linewidths=0)
-        cb_label = "Attempts (count per hex)"
+        hb = ax.hexbin(x, y, gridsize=gridsize, extent=(-250,250,0,470),
+                       mincnt=3, linewidths=0, cmap='inferno')
+        cb_label = "Attempts"
+        
+        # Apply percentile clipping for frequency
+        counts = hb.get_array()
+        if len(counts) > 0:
+            vmin, vmax = np.percentile(counts, [2, 98])
+            hb.set_clim(vmin, vmax)
 
-    cb = plt.colorbar(hb, shrink=0.85, pad=0.01)
-    cb.set_label(cb_label)
+    # Add colorbar with consistent styling
+    cb = plt.colorbar(hb, ax=ax, shrink=0.85, pad=0.01)
+    cb.set_label(cb_label, color='white')
+    cb.ax.tick_params(colors='white')
+    cb.outline.set_edgecolor('white')
 
+    # Set title and subtitle
     title = f"{player} — {season} ({season_type})"
     subtitle = "Hexbin shot chart (NBA.com Stats via nba_api)"
-    plt.suptitle(title, y=0.96, fontsize=12, fontweight="bold")
-    plt.title(subtitle, fontsize=9)
+    fig.suptitle(title, y=0.96, fontsize=12, fontweight="bold", color='white')
+    fig.text(0.5, 0.92, subtitle, ha='center', fontsize=9, color='#e6e6e6')
+
+    # Configure axes
+    ax.set_xlim(-250, 250)
+    ax.set_ylim(470, 0)  # Inverted for TV-style view
+    ax.axis('off')
+    ax.tick_params(colors='white')
 
     out = f"outputs/figures/{slugify(player)}_{season.replace(' ','_')}_{slugify(season_type)}_{metric}_hexbin.png"
     if save_png:
         os.makedirs(os.path.dirname(out), exist_ok=True)
-        plt.savefig(out, bbox_inches="tight", facecolor="white")
+        plt.savefig(out, bbox_inches="tight", facecolor='#0f1115', 
+                   transparent=False, dpi=200)
+        plt.tight_layout()
+    
+    plt.close(fig)  # Clean up
     return out
 
 def plot_plotly(csv_path: str, player: str, season: str, season_type: str, metric: str = "fg_pct", bin_size: int = 15) -> str:
