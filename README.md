@@ -53,6 +53,15 @@ python tools/build_html_index.py
 
 Opens `outputs/html/index.html` in your browser to browse all generated charts.
 
+### Cache Seeding
+
+Seed cache from a CSV URL to avoid API rate limits:
+
+```bash
+python tools/seed_cache_from_url.py --player "Stephen Curry" --season "2023-24" --url "https://example.com/shots.csv" --force
+streamlit run app.py  # Then use "Use cache only" mode
+```
+
 ## Why this is real
 
 - **Live NBA API pull**: Direct connection to NBA.com Stats API via `nba_api`
