@@ -1,0 +1,179 @@
+#!/usr/bin/env python3
+"""
+Build an HTML index file that lists all generated interactive charts.
+Scans outputs/html/ and creates a clean index with newest charts first.
+"""
+
+import os
+import glob
+from pathlib import Path
+from datetime import datetime
+
+
+def build_html_index():
+    """Build the HTML index file listing all charts."""
+    html_dir = Path("outputs/html")
+    index_path = html_dir / "index.html"
+    
+    # Ensure directory exists
+    html_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Find all HTML files except index.html
+    html_files = []
+    for html_file in html_dir.glob("*.html"):
+        if html_file.name != "index.html":
+            # Get modification time for sorting
+            mtime = html_file.stat().st_mtime
+            html_files.append((html_file, mtime))
+    
+    # Sort by modification time (newest first)
+    html_files.sort(key=lambda x: x[1], reverse=True)
+    
+    # Generate HTML content
+    html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA Shot Charts - Interactive Gallery</title>
+    <style>
+        body {{
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #0f1115;
+            color: #e6e6e6;
+            margin: 0;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }}
+        .container {{
+            max-width: 1200px;
+            margin: 0 auto;
+        }}
+        h1 {{
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }}
+        .subtitle {{
+            text-align: center;
+            color: #a0a0a0;
+            margin-bottom: 50px;
+            font-size: 1.1rem;
+        }}
+        .chart-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }}
+        .chart-card {{
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #333;
+            transition: transform 0.2s, border-color 0.2s;
+        }}
+        .chart-card:hover {{
+            transform: translateY(-2px);
+            border-color: #555;
+        }}
+        .chart-title {{
+            color: #ffffff;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }}
+        .chart-meta {{
+            color: #a0a0a0;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }}
+        .chart-link {{
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }}
+        .chart-link:hover {{
+            background: #1d4ed8;
+        }}
+        .footer {{
+            text-align: center;
+            color: #666;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #333;
+        }}
+        .last-updated {{
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: 20px;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏀 NBA Shot Charts</h1>
+        <p class="subtitle">Interactive visualization gallery powered by NBA.com Stats API</p>
+        
+        <div class="chart-grid">
+"""
+    
+    if html_files:
+        for html_file, mtime in html_files:
+            # Extract player name and details from filename
+            filename = html_file.stem
+            parts = filename.split('_')
+            
+            if len(parts) >= 4:
+                player = parts[0].replace('-', ' ').title()
+                season = parts[1]
+                season_type = parts[2].replace('-', ' ')
+                metric = parts[3] if len(parts) > 3 else 'fg_pct'
+                
+                # Format the display name
+                metric_display = "Field Goal %" if metric == "fg_pct" else "Shot Frequency"
+                
+                html_content += f"""            <div class="chart-card">
+                <div class="chart-title">{player}</div>
+                <div class="chart-meta">{season} • {season_type} • {metric_display}</div>
+                <a href="{html_file.name}" class="chart-link">View Chart</a>
+            </div>
+"""
+    else:
+        html_content += """            <div class="chart-card">
+                <div class="chart-title">No charts found</div>
+                <div class="chart-meta">Generate some interactive charts first!</div>
+            </div>
+"""
+    
+    # Add footer with timestamp
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    html_content += f"""        </div>
+        
+        <div class="footer">
+            <p>Generated by <a href="https://github.com/zaydabash/nba-shot-viz" style="color: #2563eb;">NBA Shot Chart Visualizer</a></p>
+            <p class="last-updated">Last updated: {timestamp}</p>
+        </div>
+    </div>
+</body>
+</html>"""
+    
+    # Write the index file
+    with open(index_path, 'w', encoding='utf-8') as f:
+        f.write(html_content)
+    
+    print(f"✅ HTML index built: {index_path}")
+    print(f"📊 Found {len(html_files)} interactive charts")
+    
+    return index_path
+
+
+if __name__ == "__main__":
+    build_html_index()

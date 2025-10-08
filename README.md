@@ -34,3 +34,42 @@ Generate an interactive HTML chart you can open in a browser (zoom, pan, hover):
 ```bash
 python -m src.cli --player "Stephen Curry" --season "2023-24" --season_type "Regular Season" --metric fg_pct --interactive
 ```
+
+### Comparison Charts
+
+Compare multiple players side-by-side with shared color scales:
+
+```bash
+python -m src.compare --players "Curry, LeBron, Durant" --season "2023-24" --metric fg_pct
+```
+
+### HTML Gallery
+
+After generating interactive charts, build a gallery index:
+
+```bash
+python tools/build_html_index.py
+```
+
+Opens `outputs/html/index.html` in your browser to browse all generated charts.
+
+## Why this is real
+
+- **Live NBA API pull**: Direct connection to NBA.com Stats API via `nba_api`
+- **ShotChartDetail endpoint**: Uses official `ShotChartDetail` with `context_measure_simple="FGA"`
+- **No CSV seeds**: All data fetched fresh from NBA.com, no pre-packaged datasets
+
+## Reproducibility
+
+```bash
+git clone https://github.com/zaydabash/nba-shot-viz.git && cd nba-shot-viz
+pip install -r requirements.txt
+python src/cli.py --player "Stephen Curry" --season "2023-24"
+```
+
+## Roadmap
+
+- **Team-level charts**: Visualize entire team shot patterns
+- **League-relative efficiency**: Compare players against league averages
+- **Shot zones**: Automatic zone detection and analysis
+- **Streamlit web app**: Interactive web interface for non-technical users
