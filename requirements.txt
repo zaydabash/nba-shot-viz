@@ -7,4 +7,7 @@ tenacity==9.0.0
 python-slugify==8.0.4
 rich==13.9.2
 streamlit>=1.32
-streamlit>=1.32
+scikit-learn==1.4.2
+lightgbm==4.3.0
+joblib==1.4.2
+schedule==1.2.0

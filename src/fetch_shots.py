@@ -4,6 +4,7 @@ import os
 import json
 from typing import Optional
 import pandas as pd
+import numpy as np
 from rich import print
 from slugify import slugify
 
@@ -57,6 +58,77 @@ def _resolve_proxy(passed_proxy) -> Optional[dict]:
         return passed_proxy
     return None
 
+def enhance_shot_data(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Enhance shot chart data with additional features for ML.
+    
+    Args:
+        df: Raw shot chart DataFrame from NBA API
+    
+    Returns:
+        Enhanced DataFrame with additional features
+    """
+    if df is None or df.empty:
+        return df
+    
+    df = df.copy()
+    
+    # Ensure we have the basic required columns
+    if 'LOC_X' not in df.columns or 'LOC_Y' not in df.columns:
+        print("[yellow]Warning: Missing LOC_X or LOC_Y columns[/yellow]")
+        return df
+    
+    # Add shot distance and angle
+    df['SHOT_DISTANCE'] = ((df['LOC_X']**2 + df['LOC_Y']**2)**0.5).round(1)
+    df['SHOT_ANGLE'] = (np.arctan2(df['LOC_Y'], df['LOC_X']) * 180 / np.pi).round(1)
+    
+    # Add court zone information
+    df['IS_PAINT'] = (df['LOC_X'].abs() <= 80) & (df['LOC_Y'] <= 190)
+    df['IS_CORNER_3'] = (df['LOC_X'].abs() >= 220) & (df['LOC_Y'] <= 140)
+    df['IS_ABOVE_BREAK_3'] = (df['SHOT_DISTANCE'] >= 237.5) & (~df['IS_CORNER_3'])
+    df['IS_MIDRANGE'] = (~df['IS_PAINT']) & (~df['IS_CORNER_3']) & (~df['IS_ABOVE_BREAK_3'])
+    
+    # Add shot type based on distance
+    df['SHOT_TYPE'] = 'Paint'
+    df.loc[df['IS_CORNER_3'], 'SHOT_TYPE'] = 'Corner 3'
+    df.loc[df['IS_ABOVE_BREAK_3'], 'SHOT_TYPE'] = 'Above Break 3'
+    df.loc[df['IS_MIDRANGE'], 'SHOT_TYPE'] = 'Midrange'
+    
+    # Add time-based features if available
+    if 'PERIOD' in df.columns:
+        df['IS_LATE_GAME'] = df['PERIOD'] >= 4
+        df['IS_OVERTIME'] = df['PERIOD'] > 4
+    else:
+        df['IS_LATE_GAME'] = False
+        df['IS_OVERTIME'] = False
+    
+    # Add shot clock features if available
+    if 'SHOT_CLOCK' in df.columns:
+        df['SHOT_CLOCK_LOW'] = df['SHOT_CLOCK'] <= 5
+        df['SHOT_CLOCK_HIGH'] = df['SHOT_CLOCK'] >= 20
+    else:
+        df['SHOT_CLOCK_LOW'] = False
+        df['SHOT_CLOCK_HIGH'] = False
+    
+    # Add game situation features if available
+    if 'GAME_CLOCK' in df.columns:
+        # Parse game clock to seconds remaining
+        try:
+            df['GAME_CLOCK_SECONDS'] = df['GAME_CLOCK'].str.extract(r'(\d+):(\d+)')
+            df['GAME_CLOCK_SECONDS'] = df['GAME_CLOCK_SECONDS'].apply(
+                lambda x: int(x[0]) * 60 + int(x[1]) if pd.notna(x[0]) and pd.notna(x[1]) else 0
+            )
+            df['IS_CLUTCH_TIME'] = df['GAME_CLOCK_SECONDS'] <= 120  # Last 2 minutes
+        except:
+            df['GAME_CLOCK_SECONDS'] = 0
+            df['IS_CLUTCH_TIME'] = False
+    else:
+        df['GAME_CLOCK_SECONDS'] = 0
+        df['IS_CLUTCH_TIME'] = False
+    
+    return df
+
+
 def _call_shotchart(player_id: int, season: str, season_type: str, headers, proxy) -> Optional[pd.DataFrame]:
     """Call NBA stats ShotChartDetail with retries and jitter. Returns DataFrame or None."""
     resolved_headers = _resolve_headers(headers)
@@ -84,6 +156,8 @@ def _call_shotchart(player_id: int, season: str, season_type: str, headers, prox
                 return None
             if "SHOT_MADE_FLAG" in df.columns:
                 df["SHOT_MADE_FLAG"] = df["SHOT_MADE_FLAG"].astype(int)
+            # Enhance with additional features for ML
+            df = enhance_shot_data(df)
             return df
         except (ReadTimeout, ConnectionError, HTTPError) as e:
             sleep_for = random.uniform(0.4, 0.8)

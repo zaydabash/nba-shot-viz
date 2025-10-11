@@ -1,8 +1,51 @@
+# Python
 .venv/
 __pycache__/
-.ipynb_checkpoints/
 *.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.ipynb_checkpoints/
+
+# OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Data and outputs
 data/raw/
 outputs/html/
 outputs/figures/
+outputs/predictions/
+
+# Models (keep small demo models, ignore large ones)
+models/*.pkl
+!models/demo_*.pkl
+
+# Logs
+*.log
+logs/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
