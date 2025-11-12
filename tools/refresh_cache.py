@@ -67,13 +67,13 @@ def main():
         try:
             path = get_or_fetch_shots(player, args.season, args.season_type, headers=headers, force_refresh=args.force)
             if path and os.path.exists(path) and os.path.getsize(path) > 0:
-                print(f"  ✓ Cached CSV → {path}")
+                print(f"  Cached CSV → {path}")
             elif path and os.path.exists(path):
-                print(f"  ⚠ Cached (empty) CSV → {path}")
+                print(f"  Cached (empty) CSV → {path}")
             else:
-                print(f"  ✗ Failed to cache shots for {player}")
+                print(f"  Failed to cache shots for {player}")
         except Exception as e:
-            print(f"  ✗ Error: {e}")
+            print(f"  Error: {e}")
 
 
 if __name__ == "__main__":

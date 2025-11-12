@@ -1,0 +1,61 @@
+[MASTER]
+ignore = .venv,venv,env,ENV,build,dist,*.egg-info
+jobs = 0
+suggestion-mode = yes
+
+[MESSAGES CONTROL]
+disable = 
+    too-few-public-methods,
+    too-many-arguments,
+    too-many-locals,
+    too-many-branches,
+    too-many-statements,
+    import-error,
+    no-member,
+    fixme
+
+[FORMAT]
+max-line-length = 100
+indent-string = '    '
+
+[BASIC]
+good-names = 
+    df,
+    i,
+    j,
+    k,
+    x,
+    y,
+    id,
+    pd,
+    np,
+    plt,
+    ax,
+    fig,
+    st,
+    go,
+    lgb,
+    csv_path,
+    html_path,
+    player_name,
+    season_type,
+    model_type
+
+[DESIGN]
+max-args = 7
+max-locals = 15
+max-returns = 6
+max-branches = 12
+max-statements = 50
+max-parents = 7
+max-attributes = 10
+min-public-methods = 0
+max-public-methods = 20
+
+[IMPORTS]
+preferred-modules = 
+    numpy:numpy,
+    pandas:pd,
+    matplotlib:matplotlib,
+    plotly:plotly
+

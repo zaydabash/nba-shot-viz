@@ -45,13 +45,13 @@ def main():
                                       metric=args.metric, bin_size=15)
             
             # Print per-player summary
-            summary_parts = [f"[bold green]✓ {player}: {shot_count} shots", f"PNG: {out_png}"]
+            summary_parts = [f"[bold green]{player}: {shot_count} shots", f"PNG: {out_png}"]
             if out_html:
                 summary_parts.append(f"HTML: {out_html}")
             
             print(" | ".join(summary_parts))
         except Exception as e:
-            print(f"[bold red]✗ Error processing {player}: {str(e)}[/bold red]")
+            print(f"[bold red]Error processing {player}: {str(e)}[/bold red]")
         
         if i < len(player_names):
             print()  # Add spacing between players

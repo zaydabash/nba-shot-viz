@@ -169,8 +169,8 @@ def build_html_index():
     with open(index_path, 'w', encoding='utf-8') as f:
         f.write(html_content)
     
-    print(f"✅ HTML index built: {index_path}")
-    print(f"📊 Found {len(html_files)} interactive charts")
+    print(f"HTML index built: {index_path}")
+    print(f"Found {len(html_files)} interactive charts")
     
     return index_path
 

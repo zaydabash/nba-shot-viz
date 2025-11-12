@@ -97,14 +97,14 @@ def refresh_player_data(player: str, season: str, season_type: str,
         csv_path = get_or_fetch_shots(player, season, season_type, headers=headers, force_refresh=True)
         
         if csv_path and Path(csv_path).exists() and Path(csv_path).stat().st_size > 0:
-            print(f"  ✓ Successfully refreshed {player}")
+            print(f"  Successfully refreshed {player}")
             return True
         else:
-            print(f"  ✗ Failed to refresh {player}")
+            print(f"  Failed to refresh {player}")
             return False
             
     except Exception as e:
-        print(f"  ✗ Error refreshing {player}: {e}")
+        print(f"  Error refreshing {player}: {e}")
         return False
 
 

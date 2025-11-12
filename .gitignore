@@ -42,10 +42,28 @@ models/*.pkl
 *.log
 logs/
 
-# Streamlit
+# Secrets and credentials
+.env
+.env.local
+.env.*.local
+*.env
+.secrets/
+secrets/
 .streamlit/secrets.toml
+**/secrets.toml
+**/*secret*
+**/*credential*
+**/*password*
+**/*api_key*
 
 # Temporary files
 *.tmp
 *.temp
 .cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+dist/
+build/
+*.egg-info/

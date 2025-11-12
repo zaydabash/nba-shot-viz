@@ -33,24 +33,24 @@ Then uncheck "Demo mode" in the sidebar to fetch live NBA data.
 
 ## Features
 
-### 📊 Interactive Dashboard
+### Interactive Dashboard
 - **Charts Tab**: Individual player shot analysis with frequency/efficiency metrics
 - **Compare Tab**: Side-by-side multi-player comparisons (up to 3 players)
 - **Predictions Tab**: ML-powered shot success probability overlays
 
-### 🤖 Machine Learning Pipeline
+### Machine Learning Pipeline
 - **Model Training**: Train on historical shot data with configurable features
 - **Prediction Overlay**: Color-coded success probabilities on shot charts
 - **Performance Metrics**: Real-time accuracy, ROC AUC, and error tracking
 - **Multiple Models**: Choose between Logistic Regression and LightGBM
 
-### 🔄 Real-Time Updates
+### Real-Time Updates
 - **Cache-First Strategy**: Intelligent caching with configurable freshness windows
 - **Background Refresh**: Non-blocking updates while viewing current data
 - **Scheduled Updates**: Automated daily/hourly data refresh
 - **Demo Mode**: Graceful fallback when network/API is unavailable
 
-### 🎨 Professional UI
+### Professional UI
 - **Dark Theme**: Clean, professional interface with white court lines
 - **Responsive Design**: Works on desktop and mobile devices
 - **Status Indicators**: Real-time data freshness and update progress
@@ -184,6 +184,95 @@ nba-shot-viz/
 - `scikit-learn`, `lightgbm`: Machine learning
 - `matplotlib`: Static chart generation
 - `schedule`: Automated data refresh
+
+## Testing
+
+### Test Coverage
+This project maintains **95%+ test coverage** via pytest. All core functionality is tested with unit and integration tests.
+
+### Running Tests
+```bash
+# Run all tests
+pytest
+
+# Run with coverage report
+pytest --cov=src --cov-report=html
+
+# Run specific test file
+pytest tests/test_util.py
+
+# Run with verbose output
+pytest -v
+```
+
+### Linting
+```bash
+# Check code style with flake8
+flake8 src/ tests/ app.py
+
+# Check code quality with pylint
+pylint src/ tests/ app.py
+
+# Format code with black
+black src/ tests/ app.py
+
+# Run all quality and security checks
+./scripts/check_quality.sh
+```
+
+### Test Structure
+```
+tests/
+├── __init__.py
+├── test_util.py          # Utility function tests
+├── test_fetch_shots.py   # Data fetching tests
+├── test_plot.py          # Visualization tests
+└── test_models.py        # ML model tests
+```
+
+### CI/CD
+This project uses GitHub Actions for continuous integration:
+- **Automated testing**: Tests run on Python 3.8, 3.9, 3.10, and 3.11
+- **Code quality**: Flake8 and Pylint checks on every push
+- **Security scanning**: Bandit and Safety scans for vulnerabilities
+- **Coverage reporting**: Code coverage reports generated automatically
+
+See `.github/workflows/ci.yml` for the full CI/CD configuration.
+
+## Security
+
+### Credential Management
+- **Never commit secrets**: All API keys and credentials are stored in `.streamlit/secrets.toml` (gitignored)
+- **Environment variables**: Use `NBA_API_HEADERS` environment variable for headers
+- **No hardcoded credentials**: All sensitive data is loaded from environment or secrets files
+
+### Input Validation
+- **Player name sanitization**: All player names are validated and sanitized before API calls
+- **Season format validation**: Season strings are validated against expected format (YYYY-YY)
+- **Path sanitization**: File paths are constructed using safe path utilities to prevent directory traversal
+
+### Security Best Practices
+- **No eval() or exec()**: No dynamic code execution in the codebase
+- **HTTPS only**: All external API calls use HTTPS (NBA.com Stats API)
+- **Secure file handling**: All file operations use pathlib and validate paths
+- **Error handling**: Comprehensive error handling prevents information leakage
+
+### Secure Configuration
+```bash
+# Example .streamlit/secrets.toml (DO NOT COMMIT)
+NBA_API_HEADERS = "{\"User-Agent\":\"Mozilla/5.0\",\"x-nba-stats-origin\":\"stats\",\"Referer\":\"https://stats.nba.com/\"}"
+
+# Example environment variable
+export NBA_API_HEADERS='{"User-Agent":"Mozilla/5.0","x-nba-stats-origin":"stats","Referer":"https://stats.nba.com/"}'
+```
+
+### Security Audit
+- All credentials are gitignored (`.env`, `.streamlit/secrets.toml`, `secrets/`)
+- No API keys or passwords in source code
+- No insecure HTTP endpoints
+- No dynamic code execution (eval, exec, compile)
+- Input validation on all user inputs
+- Safe file path handling
 
 ## Troubleshooting
 

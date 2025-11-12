@@ -333,7 +333,7 @@ with compare_tab:
                         continue
 
 with predictions_tab:
-    st.markdown("### 🎯 Shot Prediction Analysis")
+    st.markdown("### Shot Prediction Analysis")
     st.markdown("View shot charts with ML-powered success probability predictions.")
     
     # Model selection
